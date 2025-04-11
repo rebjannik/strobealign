@@ -10,18 +10,22 @@
 
 class References {
     typedef std::vector<unsigned int> ref_lengths;
-    typedef std::vector<std::string> ref_names;
+    typedef std::vector<std:: string> ref_names;
 
 public:
     References() { }
     References(
-        std::vector<std::string> sequences_,
+        std::vector<std::string>& string_sequences,
         ref_names names_
-    ) : sequences(std::move(sequences_)), names(std::move(names_)) {
+    ) : names(std::move(names_)) {
 
         if (sequences.size() != names.size()) {
             throw std::invalid_argument("lengths do not match");
         }
+
+        //ToDo
+        // Here is the conversion function for the byte size
+        // Each vector is a byte (or 4 characters), 
         lengths.reserve(sequences.size());
         for (auto& seq : sequences) {
             lengths.push_back(seq.size());
@@ -29,7 +33,7 @@ public:
         _total_length = std::accumulate(this->lengths.begin(), this->lengths.end(), (size_t)0);
     }
 
-    void add(std::string&& name, std::string&& sequence);
+    void add(std::string&& name, std::vector<int>&& sequence);
 
     static References from_fasta(const std::string& filename);
 
@@ -41,7 +45,7 @@ public:
         return _total_length;
     }
 
-    std::vector<std::string> sequences;
+    std::vector<std :: vector<int>> sequences;
     ref_names names;
     ref_lengths lengths;
 private:
