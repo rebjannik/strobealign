@@ -52,8 +52,8 @@ bool by_score(const T& a, const T& b)
  */
 bool reverse_nam_if_needed(Nam& nam, const Read& read, const References& references, int k) {
     auto read_len = read.size();
-    std::string ref_start_kmer = references.sequences[nam.ref_id].substr(nam.ref_start, k);
-    std::string ref_end_kmer = references.sequences[nam.ref_id].substr(nam.ref_end-k, k);
+    std::string ref_start_kmer = references.substr(nam.ref_id, nam.ref_start, k);
+    std::string ref_end_kmer = references.substr(nam.ref_id, nam.ref_end-k, k);
 
     std::string seq, seq_rc;
     if (nam.is_revcomp) {
@@ -221,7 +221,7 @@ inline Alignment extend_seed(
     bool consistent_nam
 ) {
     const std::string query = nam.is_revcomp ? read.rc : read.seq;
-    const std::string& ref = references.sequences[nam.ref_id];
+    const std::string ref = std::string(references.sequences[nam.ref_id].begin(), references.sequences[nam.ref_id].end());
 
     const auto projected_ref_start = nam.projected_ref_start();
     const auto projected_ref_end = std::min(nam.ref_end + query.size() - nam.query_end, ref.size());
@@ -483,7 +483,7 @@ inline Alignment rescue_align(
 //        std::cerr << "RESCUE: Caught Bug3! ref start: " << ref_start << " ref end: " << ref_end << " ref len:  " << ref_len << std::endl;
         return alignment;
     }
-    std::string ref_segm = references.sequences[mate_nam.ref_id].substr(ref_start, ref_end - ref_start);
+    std::string ref_segm = references.substr(mate_nam.ref_id, ref_start, ref_end - ref_start);
 
     if (!has_shared_substring(r_tmp, ref_segm, k)) {
         alignment.cigar = Cigar();

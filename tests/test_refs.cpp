@@ -9,7 +9,8 @@ TEST_CASE("References::add") {
 
     CHECK(references.names.size() == 1);
     CHECK(references.names[0] == "thename");
-    CHECK(references.sequences[0] == "ACGT");
+    //CHECK(references.sequences[0] == "ACGT");
+    CHECK(references.substr(0, 0, 4) == "ACGT");
     CHECK(references.lengths[0] == 4);
 }
 
@@ -46,9 +47,11 @@ TEST_CASE("Reference uppercase") {
     std::remove("tmpref.fasta");
     CHECK(refs.sequences.size() == 2);
     CHECK(refs.sequences[0].size() == 4);
-    CHECK(refs.sequences[0] == "ACGT");
+    // CHECK(refs.sequences[0] == "ACGT");
+    CHECK(refs.substr(0,0,4) == "ACGT");
     CHECK(refs.sequences[1].size() == 8);
-    CHECK(refs.sequences[1] == "AACCGGTT");
+    // CHECK(refs.sequences[1] == "AACCGGTT");
+    CHECK(refs.substr(1, 0, 8) == "AACCGGTT");
     CHECK(refs.names.size() == 2);
     CHECK(refs.lengths.size() == 2);
 }
@@ -63,7 +66,8 @@ TEST_CASE("Reference gzipped") {
     std::remove("tmpref.fasta.gz");
     CHECK(refs.sequences.size() == 1);
     CHECK(refs.names[0] == "ref1");
-    CHECK(refs.sequences[0] == "ACGT");
+    //CHECK(refs.sequences[0] == "ACGT");
+    CHECK(refs.substr(0, 0, 4) == "ACGT");
 }
 
 TEST_CASE("Invalid contig name") {

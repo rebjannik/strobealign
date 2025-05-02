@@ -13,6 +13,8 @@
 
 #include "indexparameters.hpp"
 
+extern unsigned char seq_nt4_table[256]; // Declare the array
+
 
 using syncmer_hash_t = uint64_t;
 using randstrobe_hash_t = uint64_t;
@@ -43,23 +45,23 @@ public:
         __uint128_t lhs = (static_cast<__uint128_t>(m_hash_offset_flag) << 64) | ((static_cast<uint64_t>(m_position) << 32) | m_ref_index);
         __uint128_t rhs = (static_cast<__uint128_t>(other.m_hash_offset_flag) << 64) | ((static_cast<uint64_t>(other.m_position) << 32) | m_ref_index);
         return lhs < rhs;
-    }
+    };
 
     unsigned reference_index() const {
         return m_ref_index;
-    }
+    };
 
     unsigned strobe2_offset() const {
         return m_hash_offset_flag & 0xff;
-    }
+    };
 
     randstrobe_hash_t hash() const {
         return m_hash_offset_flag & RANDSTROBE_HASH_MASK;
-    }
+    };
 
     uint32_t position() const {
         return m_position;
-    }
+    };
 
     static constexpr size_t max_number_of_references = (1ul << 32) - 1;
 };
@@ -83,11 +85,11 @@ struct Randstrobe {
 
     bool operator==(const Randstrobe& other) const {
         return hash == other.hash && strobe1_pos == other.strobe1_pos && strobe2_pos == other.strobe2_pos;
-    }
+    };
 
     bool operator!=(const Randstrobe& other) const {
         return !(*this == other);
-    }
+    };
 };
 
 std::ostream& operator<<(std::ostream& os, const Randstrobe& randstrobe);
@@ -97,11 +99,11 @@ struct Syncmer {
     size_t position;
     bool is_end() const {
         return hash == 0 && position == 0;
-    }
+    };
 
     bool operator==(const Syncmer& rhs) const {
         return this->hash == rhs.hash && this->position == rhs.position;
-    }
+    };
 };
 
 /*
@@ -117,15 +119,15 @@ public:
         if (parameters.w_min > parameters.w_max) {
             throw std::invalid_argument("w_min is greater than w_max");
         }
-    }
+    };
 
     Randstrobe next() {
         return get(strobe1_index++);
-    }
+    };
 
     bool has_next() {
         return strobe1_index + parameters.w_min < syncmers.size();
-    }
+    };
 
 private:
     Randstrobe get(unsigned int strobe1_index) const;
@@ -139,13 +141,16 @@ std::ostream& operator<<(std::ostream& os, const Syncmer& syncmer);
 
 class SyncmerIterator {
 public:
-    SyncmerIterator(const std::string_view seq, SyncmerParameters parameters)
+    SyncmerIterator(const std::string& seq, SyncmerParameters parameters)
+        : seq(convert_to_vector(seq)), parameters(parameters) { }
+
+        SyncmerIterator(const std::vector<int>& seq, SyncmerParameters parameters)
         : seq(seq), parameters(parameters) { }
 
     Syncmer next();
 
 private:
-    const std::string_view seq;
+    const std::vector<int> seq;
     const SyncmerParameters parameters;
 
     const uint64_t kmask = (1ULL << 2*parameters.k) - 1;
@@ -158,6 +163,15 @@ private:
     uint64_t xk[2] = {0, 0};
     uint64_t xs[2] = {0, 0};
     size_t i = 0;
+
+    static std::vector<int> convert_to_vector(const std::string& seq) {
+        std::vector<int> result;
+        result.reserve(seq.size());
+        for (char c : seq) {
+            result.push_back(seq_nt4_table[static_cast<unsigned char>(c)]);
+        }
+        return result;
+    };
 };
 
 /*
@@ -169,12 +183,12 @@ private:
 class RandstrobeGenerator {
 public:
     RandstrobeGenerator(
-        const std::string& seq,
+        const std::vector<int>& seq,
         SyncmerParameters syncmer_parameters,
         RandstrobeParameters randstrobe_parameters
     ) : syncmer_iterator(SyncmerIterator(seq, syncmer_parameters))
       , parameters(randstrobe_parameters)
-    { }
+    { };
 
     Randstrobe next();
     Randstrobe end() const { return Randstrobe{0, 0, 0, 0}; }

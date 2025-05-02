@@ -96,8 +96,11 @@ TEST_CASE("RandstrobeGenerator is sane") {
         CHECK(randstrobe.hash > 0);
         CHECK(randstrobe.strobe1_pos >= 0);
         CHECK(randstrobe.strobe2_pos >= randstrobe.strobe2_pos);
-        CHECK(randstrobe.strobe1_pos < seq.length());
-        CHECK(randstrobe.strobe2_pos < seq.length());
+        //Previous tests
+        // CHECK(randstrobe.strobe1_pos < seq.length());
+        //CHECK(randstrobe.strobe2_pos < seq.length());
+        CHECK(randstrobe.strobe1_pos < seq.size());
+        CHECK(randstrobe.strobe2_pos < seq.size());
     }
 }
 
@@ -106,7 +109,13 @@ TEST_CASE("RandstrobeIterator is sane") {
     auto& seq = references.sequences[0];
     auto parameters = IndexParameters::from_read_length(300);
 
-    auto syncmers = canonical_syncmers(seq, parameters.syncmer);
+    std::string decoded_sequence;
+    for (int i : seq) {
+        decoded_sequence += "ACGT"[i];
+    }
+    auto syncmers = canonical_syncmers(decoded_sequence, parameters.syncmer);
+    
+    //auto syncmers = canonical_syncmers(seq, parameters.syncmer);
     RandstrobeIterator iter{syncmers, parameters.randstrobe};
 
     while (iter.has_next()) {
@@ -114,8 +123,10 @@ TEST_CASE("RandstrobeIterator is sane") {
         CHECK(randstrobe.hash > 0);
         CHECK(randstrobe.strobe1_pos >= 0);
         CHECK(randstrobe.strobe2_pos >= randstrobe.strobe2_pos);
-        CHECK(randstrobe.strobe1_pos < seq.length());
-        CHECK(randstrobe.strobe2_pos < seq.length());
+        //CHECK(randstrobe.strobe1_pos < seq.length());
+        //CHECK(randstrobe.strobe2_pos < seq.length());
+        CHECK(randstrobe.strobe1_pos < seq.size());
+        CHECK(randstrobe.strobe2_pos < seq.size());
     }
 }
 
@@ -123,8 +134,12 @@ TEST_CASE("both randstrobes iterator implementations give same results") {
     auto references = References::from_fasta("tests/phix.fasta");
     auto& seq = references.sequences[0];
     auto parameters = IndexParameters::from_read_length(300);
-
-    auto syncmers = canonical_syncmers(seq, parameters.syncmer);
+    std::string decoded_sequence;
+    for (int i : seq) {
+        decoded_sequence += "ACGT"[i];
+    }
+    auto syncmers = canonical_syncmers(decoded_sequence, parameters.syncmer);
+    //auto syncmers = canonical_syncmers(seq, parameters.syncmer);
     RandstrobeIterator iter1{syncmers, parameters.randstrobe};
     RandstrobeGenerator iter2{seq, parameters.syncmer, parameters.randstrobe};
 
