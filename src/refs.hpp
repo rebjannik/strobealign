@@ -7,60 +7,54 @@
 #include <numeric>
 #include <vector>
 #include "exceptions.hpp"
-static unsigned char seq_nt4_table[256] = {
-    0, 1, 2, 3,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4
-};
+
+extern unsigned char seq_nt4_table[256]; // Declare the array
 
 class References {
     typedef std::vector<unsigned int> ref_lengths;
     typedef std::vector<std:: string> ref_names;
 
 public:
-    References() { }
+    References() : _total_length(0) { }
     References(
-        std::vector<std::string>& string_sequences,
-        ref_names names_
-    ) : names(std::move(names_)) {
-
-        if (sequences.size() != names.size()) {
-            throw std::invalid_argument("lengths do not match");
-        }
-
-        //ToDo
-        // Here is the conversion function for the byte size
-        // Each vector is a byte (or 4 characters), 
-        lengths.reserve(sequences.size());
-
-        for (auto& seq : sequences) {
-            lengths.push_back(seq.size());
-        }
-
-        _total_length = std::accumulate(this->lengths.begin(), this->lengths.end(), (size_t)0);
-        
-        for ( int i = 0; i < _total_length; ++i){
-            for (char nucleotide : sequences[i]) {
-                int c = seq_nt4_table[(uint8_t)nucleotide];
-                sequences[i] = c < 4 ? nucleotide : 3;
+        const std::vector<std::string>& string_sequences,
+        const ref_names& names_
+    ) : names(names_), _total_length(0) {
+        for (const auto& str : string_sequences) {
+            std::vector<int> seq;
+            seq.reserve(str.size());
+            for (char c : str) {
+                seq.push_back(seq_nt4_table[static_cast<unsigned char>(c)]);
             }
+            sequences.push_back(std::move(seq));
+            lengths.push_back(str.length());
+            _total_length += str.length();
+        }
+        if (sequences.size() != names.size()) {
+            throw std::invalid_argument("Lengths do not match");
         }
     }
-
-    void add(std::string&& name, std::vector<int>&& sequence);
+    
+    std::string operator[](size_t ref_id) const {
+        if (ref_id >= sequences.size()) {
+            throw std::out_of_range("Invalid reference ID");
+        }
+    
+        std::string result;
+        result.reserve(sequences[ref_id].size());
+        for (int i : sequences[ref_id]) {
+            result += "ACGT"[i];
+        }
+        return result;
+    }
+    
+    void convert(const std::string& str, std::vector<int>& seq) const {
+        for (char c : str) {
+            seq.push_back(seq_nt4_table[static_cast<unsigned char>(c)]);
+        }
+    }
+    
+    void add(std::string&& name, std::string&& sequence);
 
     static References from_fasta(const std::string& filename);
 
@@ -72,11 +66,21 @@ public:
         return _total_length;
     }
 
+    std::string substr (size_t ref_id, size_t start, size_t length) const{
+        std:: string result;
+       
+        result.reserve(length);
+        for (size_t i = start; i < start + length; ++i) {
+            result += "ACGT"[sequences[ref_id][i]];
+    }
+        return result;
+    }
 
     std::vector<std :: vector<int>> sequences;
     ref_names names;
     ref_lengths lengths;
-private:
+
+    private:
     size_t _total_length;
 };
 

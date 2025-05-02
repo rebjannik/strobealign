@@ -32,7 +32,7 @@ void dump_randstrobes(std::ostream& os, const std::string& name, const std::stri
     }
 }
 
-void dump_randstrobes2(std::ostream& os, const std::string& name, const std::string& sequence, const IndexParameters& parameters) {
+void dump_randstrobes2(std::ostream& os, const std::string& name, const std::vector<int> sequence, const IndexParameters& parameters) {
     auto randstrobe_iter = RandstrobeGenerator(sequence, parameters.syncmer, parameters.randstrobe);
     Randstrobe randstrobe;
     while ((randstrobe = randstrobe_iter.next()) != randstrobe_iter.end()) {
@@ -40,7 +40,7 @@ void dump_randstrobes2(std::ostream& os, const std::string& name, const std::str
     }
 }
 
-uint64_t count_randstrobes(const std::string& sequence, const IndexParameters& parameters) {
+uint64_t count_randstrobes(const std::vector<int> sequence, const IndexParameters& parameters) {
     auto randstrobe_iter = RandstrobeGenerator(sequence, parameters.syncmer, parameters.randstrobe);
     Randstrobe randstrobe;
     uint64_t n = 0;
@@ -50,7 +50,7 @@ uint64_t count_randstrobes(const std::string& sequence, const IndexParameters& p
     return n;
 }
 
-void dump_syncmers(std::ostream& os, const std::string& name, const std::string& sequence, const IndexParameters& parameters) {
+void dump_syncmers(std::ostream& os, const std::string& name, const std::vector<int> sequence, const IndexParameters& parameters) {
     SyncmerIterator syncmer_iterator(sequence, parameters.syncmer);
     Syncmer syncmer;
     while (!(syncmer = syncmer_iterator.next()).is_end()) {
@@ -58,7 +58,7 @@ void dump_syncmers(std::ostream& os, const std::string& name, const std::string&
     }
 }
 
-uint64_t count_syncmers(const std::string& sequence, const SyncmerParameters& parameters) {
+uint64_t count_syncmers(const std::vector<int>& sequence, const SyncmerParameters& parameters) {
     SyncmerIterator syncmer_iterator(sequence, parameters);
     Syncmer syncmer;
     uint64_t n = 0;

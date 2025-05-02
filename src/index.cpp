@@ -26,7 +26,7 @@ static const uint32_t STI_FILE_FORMAT_VERSION = 5;
 
 namespace {
 
-uint64_t count_randstrobes(const std::string& seq, const IndexParameters& parameters) {
+uint64_t count_randstrobes(const std::vector<int>& seq, const IndexParameters& parameters) {
     uint64_t n_syncmers = 0;
     SyncmerIterator syncmer_iterator(seq, parameters.syncmer);
     Syncmer syncmer;
@@ -282,7 +282,7 @@ void StrobemerIndex::assign_all_randstrobes(const std::vector<uint64_t>& randstr
  */
 void StrobemerIndex::assign_randstrobes(size_t ref_index, size_t offset) {
     auto& seq = references.sequences[ref_index];
-    if (seq.length() < parameters.randstrobe.w_max) {
+    if (seq.size() < parameters.randstrobe.w_max) {
         return;
     }
     RandstrobeGenerator randstrobe_iter{seq, parameters.syncmer, parameters.randstrobe};
