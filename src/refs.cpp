@@ -133,17 +133,11 @@ References References::from_fasta(const std::string& filename) {
 }
 
 void References::add(std::string&& name, std::string&& string_seq) {
-    std::cerr << "Before add: names.size=" << names.size()
-              << ", sequences.size=" << sequences.size() << std::endl;
-
     names.push_back(name);
-    std::vector<int> sequence;
-    convert(string_seq, sequence);
-    sequences.push_back(sequence);
+    std::vector<uint8_t> sequence_int;
+    pack_sequence(string_seq, sequence_int);
+    std::vector<uint8_t> sequence(sequence_int.begin(), sequence_int.end());
+    sequences.push_back(std::move(sequence));
     lengths.push_back(string_seq.length());
     _total_length += string_seq.length();
-
-    std::cerr << "Added sequence: " << name << ", length: " << sequence.size() << std::endl;
-    std::cerr << "After add: names.size=" << names.size()
-              << ", sequences.size=" << sequences.size() << std::endl;
 }

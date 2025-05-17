@@ -15,13 +15,13 @@ std::vector<Syncmer> syncmers_of(std::string& seq, SyncmerParameters parameters)
     return syncmers;
 }
 
-std::string decode_sequence(const std::vector<int>& encoded_seq) {
+std::string decode_sequence(const std::vector<uint8_t>& encoded_seq) {
     static const char nt4_to_char[] = {'A', 'C', 'G', 'T'};
     std::string decoded_seq;
     decoded_seq.reserve(encoded_seq.size());
 
-    for (int nt : encoded_seq) {
-        if (nt >= 0 && nt < 4) {
+    for (auto nt : encoded_seq) {
+        if (nt < 4) {
             decoded_seq.push_back(nt4_to_char[nt]);
         } else {
             decoded_seq.push_back('N'); // Handle invalid nucleotides
@@ -35,7 +35,7 @@ TEST_CASE("SyncmerIterator yields canonical syncmers") {
     SyncmerParameters parameters{20, 16};
     std::vector<std::string> seqs;
 
-    std::vector<int> encoded_seq = References::from_fasta("tests/phix.fasta").sequences[0];
+    std::vector<uint8_t> encoded_seq = References::from_fasta("tests/phix.fasta").sequences[0];
     std::string decoded_seq = decode_sequence(encoded_seq);
     seqs.push_back(decoded_seq);
 

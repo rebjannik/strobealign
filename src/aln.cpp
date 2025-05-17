@@ -221,16 +221,15 @@ inline Alignment extend_seed(
     bool consistent_nam
 ) {
     const std::string query = nam.is_revcomp ? read.rc : read.seq;
-    const std::string ref = std::string(references.sequences[nam.ref_id].begin(), references.sequences[nam.ref_id].end());
-
+    
     const auto projected_ref_start = nam.projected_ref_start();
-    const auto projected_ref_end = std::min(nam.ref_end + query.size() - nam.query_end, ref.size());
+    const auto projected_ref_end = std::min(nam.ref_end + size_t(query.size() - nam.query_end), references.sequences[nam.ref_id].size());
 
     AlignmentInfo info;
     int result_ref_start;
     bool gapped = true;
     if (projected_ref_end - projected_ref_start == query.size() && consistent_nam) {
-        std::string ref_segm_ham = ref.substr(projected_ref_start, query.size());
+        std::string ref_segm_ham = references.substr(nam.ref_id, projected_ref_start, query.size());
         auto hamming_dist = hamming_distance(query, ref_segm_ham);
 
         if (hamming_dist >= 0 && (((float) hamming_dist / query.size()) < 0.05) ) { //Hamming distance worked fine, no need to ksw align
@@ -243,9 +242,9 @@ inline Alignment extend_seed(
         const int diff = std::abs(nam.ref_span() - nam.query_span());
         const int ext_left = std::min(50, projected_ref_start);
         const int ref_start = projected_ref_start - ext_left;
-        const int ext_right = std::min(std::size_t(50), ref.size() - nam.ref_end);
+        const int ext_right = std::min(std::size_t(50), references.sequences[nam.ref_id].size() - nam.ref_end);
         const auto ref_segm_size = read.size() + diff + ext_left + ext_right;
-        const auto ref_segm = ref.substr(ref_start, ref_segm_size);
+        const auto ref_segm = references.substr(nam.ref_id, ref_start, ref_segm_size);
         auto opt_info = aligner.align(query, ref_segm);
         if (opt_info) {
             info = opt_info.value();

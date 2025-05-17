@@ -46,10 +46,12 @@ TEST_CASE("Reference uppercase") {
     auto refs = References::from_fasta("tmpref.fasta");
     std::remove("tmpref.fasta");
     CHECK(refs.sequences.size() == 2);
-    CHECK(refs.sequences[0].size() == 4);
+    //CHECK(refs.sequences[0].size() == 4);
+    CHECK(refs.sequences[0].size() == 1);
     // CHECK(refs.sequences[0] == "ACGT");
     CHECK(refs.substr(0,0,4) == "ACGT");
-    CHECK(refs.sequences[1].size() == 8);
+    //CHECK(refs.sequences[1].size() == 8);
+    CHECK(refs.sequences[1].size() == 2);
     // CHECK(refs.sequences[1] == "AACCGGTT");
     CHECK(refs.substr(1, 0, 8) == "AACCGGTT");
     CHECK(refs.names.size() == 2);

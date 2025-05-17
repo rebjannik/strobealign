@@ -26,9 +26,9 @@ static const uint32_t STI_FILE_FORMAT_VERSION = 5;
 
 namespace {
 
-uint64_t count_randstrobes(const std::vector<int>& seq, const IndexParameters& parameters) {
+uint64_t count_randstrobes(const std::vector<uint8_t>& seq, size_t seq_length, const IndexParameters& parameters) {
     uint64_t n_syncmers = 0;
-    SyncmerIterator syncmer_iterator(seq, parameters.syncmer);
+    SyncmerIterator syncmer_iterator(seq, parameters.syncmer, seq_length);
     Syncmer syncmer;
     while (!(syncmer = syncmer_iterator.next()).is_end()) {
         n_syncmers++;
@@ -57,7 +57,7 @@ std::vector<uint64_t> count_all_randstrobes(const References& references, const 
                         if (j >= references.size()) {
                             break;
                         }
-                        counts[j] = count_randstrobes(references.sequences[j], parameters);
+                        counts[j] = count_randstrobes(references.sequences[j], references.lengths[j], parameters);
                     }
                 }, std::ref(references), std::ref(parameters), std::ref(counts))
         );
@@ -282,10 +282,11 @@ void StrobemerIndex::assign_all_randstrobes(const std::vector<uint64_t>& randstr
  */
 void StrobemerIndex::assign_randstrobes(size_t ref_index, size_t offset) {
     auto& seq = references.sequences[ref_index];
+    size_t seq_length = references.lengths[ref_index];
     if (seq.size() < parameters.randstrobe.w_max) {
         return;
     }
-    RandstrobeGenerator randstrobe_iter{seq, parameters.syncmer, parameters.randstrobe};
+    RandstrobeGenerator randstrobe_iter{seq, seq_length, parameters.syncmer, parameters.randstrobe};
     std::vector<Randstrobe> chunk;
     // TODO
     // Chunking makes this function faster, but the speedup is achieved even

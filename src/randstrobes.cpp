@@ -51,9 +51,12 @@ std::ostream& operator<<(std::ostream& os, const Syncmer& syncmer) {
 }
 
 Syncmer SyncmerIterator::next() {
-    for ( ; i < seq.size(); ++i) {
-//    for (size_t i = 0; i < seq.length(); i++) {
-        int c = seq_nt4_table[(uint8_t) seq[i]];
+    for (; i < seq_length; ++i) {
+        uint8_t byte = seq[i / 4];
+        int shift = 6 - 2 * (i % 4);
+        uint8_t c = (byte >> shift) & 0x3;
+        
+        //int c = seq_nt4_table[(uint8_t) seq[i]];
         if (c < 4) { // not an "N" base
             xk[0] = (xk[0] << 2 | c) & kmask;                  // forward strand
             xk[1] = xk[1] >> 2 | (uint64_t)(3 - c) << kshift;  // reverse strand
@@ -112,21 +115,30 @@ Syncmer SyncmerIterator::next() {
 
 std::vector<Syncmer> canonical_syncmers(
     const std::string_view seq,
+    const std:: size_t seq_length,
     SyncmerParameters parameters
 ) {
-        std::vector<int> encoded_seq;
+    std::vector<uint8_t> encoded_seq;
     encoded_seq.reserve(seq.size());
+    
     for (char c : seq) {
         encoded_seq.push_back(seq_nt4_table[static_cast<unsigned char>(c)]);
     }
 
-        std::vector<Syncmer> syncmers;
-    SyncmerIterator syncmer_iterator{encoded_seq, parameters};
+    std::vector<Syncmer> syncmers;
+    SyncmerIterator syncmer_iterator{encoded_seq, parameters, seq_length};
     Syncmer syncmer;
     while (!(syncmer = syncmer_iterator.next()).is_end()) {
         syncmers.push_back(syncmer);
     }
     return syncmers;
+}
+
+std::vector<Syncmer> canonical_syncmers(
+    std::string_view seq,
+    SyncmerParameters parameters
+) {
+    return canonical_syncmers(seq, seq.size(), parameters);
 }
 
 std::ostream& operator<<(std::ostream& os, const Randstrobe& randstrobe) {

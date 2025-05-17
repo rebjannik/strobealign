@@ -32,16 +32,16 @@ void dump_randstrobes(std::ostream& os, const std::string& name, const std::stri
     }
 }
 
-void dump_randstrobes2(std::ostream& os, const std::string& name, const std::vector<int> sequence, const IndexParameters& parameters) {
-    auto randstrobe_iter = RandstrobeGenerator(sequence, parameters.syncmer, parameters.randstrobe);
+void dump_randstrobes2(std::ostream& os, const std::string& name, const std::vector<uint8_t> sequence, size_t seq_length, const IndexParameters& parameters) {
+    auto randstrobe_iter = RandstrobeGenerator(sequence, seq_length, parameters.syncmer, parameters.randstrobe);
     Randstrobe randstrobe;
     while ((randstrobe = randstrobe_iter.next()) != randstrobe_iter.end()) {
         os << BedRecord{name, randstrobe.strobe1_pos, randstrobe.strobe2_pos + parameters.syncmer.k};
     }
 }
 
-uint64_t count_randstrobes(const std::vector<int> sequence, const IndexParameters& parameters) {
-    auto randstrobe_iter = RandstrobeGenerator(sequence, parameters.syncmer, parameters.randstrobe);
+uint64_t count_randstrobes(const std::vector<uint8_t> sequence, size_t seq_length, const IndexParameters& parameters) {
+    auto randstrobe_iter = RandstrobeGenerator(sequence,seq_length, parameters.syncmer, parameters.randstrobe);
     Randstrobe randstrobe;
     uint64_t n = 0;
     while ((randstrobe = randstrobe_iter.next()) != randstrobe_iter.end()) {
@@ -50,16 +50,16 @@ uint64_t count_randstrobes(const std::vector<int> sequence, const IndexParameter
     return n;
 }
 
-void dump_syncmers(std::ostream& os, const std::string& name, const std::vector<int> sequence, const IndexParameters& parameters) {
-    SyncmerIterator syncmer_iterator(sequence, parameters.syncmer);
+void dump_syncmers(std::ostream& os, const std::string& name, const std::vector<uint8_t> sequence, size_t seq_length, const IndexParameters& parameters) {
+    SyncmerIterator syncmer_iterator(sequence, parameters.syncmer, seq_length);
     Syncmer syncmer;
     while (!(syncmer = syncmer_iterator.next()).is_end()) {
         os << BedRecord{name, syncmer.position, syncmer.position + parameters.syncmer.k};
     }
 }
 
-uint64_t count_syncmers(const std::vector<int>& sequence, const SyncmerParameters& parameters) {
-    SyncmerIterator syncmer_iterator(sequence, parameters);
+uint64_t count_syncmers(const std::vector<uint8_t>& sequence, size_t seq_length, const SyncmerParameters& parameters) {
+    SyncmerIterator syncmer_iterator(sequence, parameters, seq_length);
     Syncmer syncmer;
     uint64_t n = 0;
     while (!(syncmer = syncmer_iterator.next()).is_end()) {
@@ -147,10 +147,11 @@ int run_dumpstrobes(int argc, char **argv) {
         uint64_t n = 0;
         for (size_t i = 0; i < references.size(); ++i) {
             auto& seq = references.sequences[i];
+            size_t seq_length = references.lengths[i];
             if (syncmers) {
-                n += count_syncmers(seq, index_parameters.syncmer);
+                n += count_syncmers(seq, seq_length, index_parameters.syncmer);
             } else {
-                n += count_randstrobes(seq, index_parameters);
+                n += count_randstrobes(seq, seq_length, index_parameters);
             }
         }
         std::cout << n << std::endl;
@@ -167,11 +168,12 @@ int run_dumpstrobes(int argc, char **argv) {
     } else {
         for (size_t i = 0; i < references.size(); ++i) {
             auto& seq = references.sequences[i];
+            size_t seq_length = references.lengths[i];
             auto& name = references.names[i];
             if (syncmers) {
-                dump_syncmers(std::cout, name, seq, index_parameters);
+                dump_syncmers(std::cout, name, seq, seq_length, index_parameters);
             } else {
-                dump_randstrobes2(std::cout, name, seq, index_parameters);
+                dump_randstrobes2(std::cout, name, seq, seq_length, index_parameters);
             }
         }
     }

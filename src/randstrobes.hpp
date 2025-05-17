@@ -142,16 +142,17 @@ std::ostream& operator<<(std::ostream& os, const Syncmer& syncmer);
 class SyncmerIterator {
 public:
     SyncmerIterator(const std::string& seq, SyncmerParameters parameters)
-        : seq(convert_to_vector(seq)), parameters(parameters) { }
+        : seq(convert_to_vector(seq)), parameters(parameters), seq_length(seq.size()) { }
 
-        SyncmerIterator(const std::vector<int>& seq, SyncmerParameters parameters)
-        : seq(seq), parameters(parameters) { }
+        SyncmerIterator(const std::vector<uint8_t>& seq, SyncmerParameters parameters, size_t seq_length)
+        : seq(seq), parameters(parameters), seq_length(seq_length) { }
 
     Syncmer next();
 
 private:
-    const std::vector<int> seq;
+    const std::vector<uint8_t> seq;
     const SyncmerParameters parameters;
+    const size_t seq_length;
 
     const uint64_t kmask = (1ULL << 2*parameters.k) - 1;
     const uint64_t smask = (1ULL << 2*parameters.s) - 1;
@@ -164,12 +165,27 @@ private:
     uint64_t xs[2] = {0, 0};
     size_t i = 0;
 
-    static std::vector<int> convert_to_vector(const std::string& seq) {
-        std::vector<int> result;
-        result.reserve(seq.size());
-        for (char c : seq) {
-            result.push_back(seq_nt4_table[static_cast<unsigned char>(c)]);
+    static std::vector<uint8_t> convert_to_vector(const std::string& seq) {
+        uint8_t byte = 0;
+        int count = 0;
+        std::vector<uint8_t> result;
+
+        for (char c : seq){
+            uint8_t val = seq_nt4_table[static_cast<unsigned char>(c)];
+            byte = (byte << 2) | val;
+            count++;
+            if (count == 4){
+            result.push_back(byte);
+            byte = 0;
+            count = 0;
+            }
         }
+
+        if (count > 0) {
+            byte <<= (2 * (4 - count));
+            result.push_back(byte);
+        }
+
         return result;
     };
 };
@@ -183,10 +199,12 @@ private:
 class RandstrobeGenerator {
 public:
     RandstrobeGenerator(
-        const std::vector<int>& seq,
+        const std::vector<uint8_t>& seq,
+        const std::size_t seq_length,
         SyncmerParameters syncmer_parameters,
         RandstrobeParameters randstrobe_parameters
-    ) : syncmer_iterator(SyncmerIterator(seq, syncmer_parameters))
+
+    ) : syncmer_iterator(SyncmerIterator(seq, syncmer_parameters, seq_length))
       , parameters(randstrobe_parameters)
     { };
 
