@@ -148,9 +148,6 @@ TEST_CASE("both randstrobes iterator implementations give same results") {
         auto randstrobe1 = iter1.next();
         auto randstrobe2 = iter2.next();
 
-        std::cout << "randstrobe1: " << randstrobe1 << " randstrobe2: " << randstrobe2 << std::endl;
-
-
         CHECK(randstrobe2 != iter2.end());
         CHECK(randstrobe1 == randstrobe2);
     }

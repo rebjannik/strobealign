@@ -121,9 +121,25 @@ std::vector<Syncmer> canonical_syncmers(
     std::vector<uint8_t> encoded_seq;
     encoded_seq.reserve(seq.size());
     
-    for (char c : seq) {
-        encoded_seq.push_back(seq_nt4_table[static_cast<unsigned char>(c)]);
-    }
+    uint8_t byte = 0;
+        int count = 0;
+
+        for (char c : seq){
+            uint8_t val = seq_nt4_table[static_cast<unsigned char>(c)];
+            byte = (byte << 2) | val;
+            count++;
+            
+            if (count == 4){
+                encoded_seq.push_back(byte);
+                byte = 0;
+                count = 0;
+            }
+        }
+
+        if (count > 0) {
+            byte <<= (2 * (4 - count));
+            encoded_seq.push_back(byte);
+        }
 
     std::vector<Syncmer> syncmers;
     SyncmerIterator syncmer_iterator{encoded_seq, parameters, seq_length};

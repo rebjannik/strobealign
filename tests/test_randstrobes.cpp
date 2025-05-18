@@ -35,8 +35,11 @@ TEST_CASE("SyncmerIterator yields canonical syncmers") {
     SyncmerParameters parameters{20, 16};
     std::vector<std::string> seqs;
 
-    std::vector<uint8_t> encoded_seq = References::from_fasta("tests/phix.fasta").sequences[0];
-    std::string decoded_seq = decode_sequence(encoded_seq);
+    References references = References::from_fasta("tests/phix.fasta");
+
+    std::vector<uint8_t> encoded_seq = references.sequences[0];
+    uint seq_length = references.lengths[0];
+    std::string decoded_seq = references.unpack_sequence(encoded_seq,seq_length);
     seqs.push_back(decoded_seq);
 
     seqs.push_back("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
