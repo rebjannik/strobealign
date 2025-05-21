@@ -1,2 +1,0 @@
-CHECK(randstrobe.strobe1_pos < seq_length);
-CHECK(randstrobe.strobe2_pos < seq_length);
