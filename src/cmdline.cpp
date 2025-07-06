@@ -2,7 +2,7 @@
 
 #include <args.hxx>
 #include "arguments.hpp"
-#include "version.hpp"
+#include "version.cpp"
 
 class Version {};
 

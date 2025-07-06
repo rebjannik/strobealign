@@ -7,6 +7,24 @@
 #include "refs.hpp"
 #include "zstr.hpp"
 
+unsigned char seq_nt4_table[256] = {
+    0, 1, 2, 3,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+    4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4
+};
 
 /* Convert string to uppercase in-place */
 void to_uppercase(std::string& s) {
@@ -114,8 +132,13 @@ References References::from_fasta(const std::string& filename) {
     }
 }
 
-void References::add(std::string&& name, std::string&& sequence) {
+void References::add(std::string&& name, std::string&& string_seq) {
     names.push_back(name);
-    sequences.push_back(sequence);
-    lengths.push_back(sequence.size());
+    std::vector<uint8_t> sequence_int;
+    pack_sequence(string_seq, sequence_int);
+    std::vector<uint8_t> sequence(sequence_int.begin(), sequence_int.end());
+    sequences.push_back(std::move(sequence));
+    lengths.push_back(string_seq.length());
+    _total_length += string_seq.length();
 }
+

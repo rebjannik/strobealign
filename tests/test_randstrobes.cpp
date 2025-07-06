@@ -15,11 +15,35 @@ std::vector<Syncmer> syncmers_of(std::string& seq, SyncmerParameters parameters)
     return syncmers;
 }
 
+std::string decode_sequence(const std::vector<uint8_t>& encoded_seq) {
+    static const char nt4_to_char[] = {'A', 'C', 'G', 'T'};
+    std::string decoded_seq;
+    decoded_seq.reserve(encoded_seq.size());
+
+    for (auto nt : encoded_seq) {
+        if (nt < 4) {
+            decoded_seq.push_back(nt4_to_char[nt]);
+        } else {
+            decoded_seq.push_back('N'); // Handle invalid nucleotides
+        }
+    }
+
+    return decoded_seq;
+}
+
 TEST_CASE("SyncmerIterator yields canonical syncmers") {
     SyncmerParameters parameters{20, 16};
     std::vector<std::string> seqs;
-    seqs.push_back(References::from_fasta("tests/phix.fasta").sequences[0]);
+
+    References references = References::from_fasta("tests/phix.fasta");
+
+    std::vector<uint8_t> encoded_seq = references.sequences[0];
+    uint seq_length = references.lengths[0];
+    std::string decoded_seq = references.unpack_sequence(encoded_seq,seq_length);
+    seqs.push_back(decoded_seq);
+
     seqs.push_back("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
     for (std::string& seq : seqs) {
         std::string seq_reverse = reverse_complement(seq);
         std::vector<Syncmer> syncmers_forward = syncmers_of(seq, parameters);

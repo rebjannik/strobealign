@@ -12,24 +12,7 @@
 // c, C -> 1
 // g, G -> 2
 // t, T, u, U -> 3
-static unsigned char seq_nt4_table[256] = {
-        0, 1, 2, 3,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
-        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4
-};
+
 
 static inline syncmer_hash_t syncmer_kmer_hash(uint64_t packed) {
     // return robin_hash(yk);
@@ -68,9 +51,12 @@ std::ostream& operator<<(std::ostream& os, const Syncmer& syncmer) {
 }
 
 Syncmer SyncmerIterator::next() {
-    for ( ; i < seq.length(); ++i) {
-//    for (size_t i = 0; i < seq.length(); i++) {
-        int c = seq_nt4_table[(uint8_t) seq[i]];
+    for (; i < seq_length; ++i) {
+        uint8_t byte = seq[i / 4];
+        int shift = 6 - 2 * (i % 4);
+        uint8_t c = (byte >> shift) & 0x3;
+        
+        //int c = seq_nt4_table[(uint8_t) seq[i]];
         if (c < 4) { // not an "N" base
             xk[0] = (xk[0] << 2 | c) & kmask;                  // forward strand
             xk[1] = xk[1] >> 2 | (uint64_t)(3 - c) << kshift;  // reverse strand
@@ -129,15 +115,46 @@ Syncmer SyncmerIterator::next() {
 
 std::vector<Syncmer> canonical_syncmers(
     const std::string_view seq,
+    const std:: size_t seq_length,
     SyncmerParameters parameters
 ) {
+    std::vector<uint8_t> encoded_seq;
+    encoded_seq.reserve(seq.size());
+    
+    uint8_t byte = 0;
+        int count = 0;
+
+        for (char c : seq){
+            uint8_t val = seq_nt4_table[static_cast<unsigned char>(c)];
+            byte = (byte << 2) | val;
+            count++;
+            
+            if (count == 4){
+                encoded_seq.push_back(byte);
+                byte = 0;
+                count = 0;
+            }
+        }
+
+        if (count > 0) {
+            byte <<= (2 * (4 - count));
+            encoded_seq.push_back(byte);
+        }
+
     std::vector<Syncmer> syncmers;
-    SyncmerIterator syncmer_iterator{seq, parameters};
+    SyncmerIterator syncmer_iterator{encoded_seq, parameters, seq_length};
     Syncmer syncmer;
     while (!(syncmer = syncmer_iterator.next()).is_end()) {
         syncmers.push_back(syncmer);
     }
     return syncmers;
+}
+
+std::vector<Syncmer> canonical_syncmers(
+    std::string_view seq,
+    SyncmerParameters parameters
+) {
+    return canonical_syncmers(seq, seq.size(), parameters);
 }
 
 std::ostream& operator<<(std::ostream& os, const Randstrobe& randstrobe) {
@@ -224,7 +241,10 @@ Randstrobe RandstrobeGenerator::next() {
 /*
  * Generate randstrobes for a query sequence and its reverse complement.
  */
-std::array<std::vector<QueryRandstrobe>, 2> randstrobes_query(const std::string_view seq, const IndexParameters& parameters) {
+std::array<std::vector<QueryRandstrobe>, 2> randstrobes_query(
+    const std::string_view seq,
+    const IndexParameters& parameters
+) {
     std::array<std::vector<QueryRandstrobe>, 2> randstrobes;
     if (seq.length() < parameters.randstrobe.w_max) {
         return randstrobes;
